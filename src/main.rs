@@ -6,19 +6,34 @@ use regex::Regex;
 
 fn main() {
     println!("Hello, world!");
-    let re = Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
-    assert!(re.is_match("2014-01-01"));
+    let re_iv4 = Regex::new(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$").unwrap();
+    //assert!(re.is_match("2014-01-01"));
+    println!("{}", re_iv4.is_match("127.0.0.1"));
 
-
+    let mut anon_lines: Vec<String> = Vec::new();
     // File hosts must exist in current path before this produces output
     if let Ok(lines) = read_lines("./access.log") {
         // Consumes the iterator, returns an (Optional) String
         for line in lines {
             if let Ok(content) = line {
-                let v: Vec<&str> = content.split(' ').collect();
-                if let Some(pos) = content.find("[client") {
-                    println!("{}", content);
+                let words: Vec<&str> = content.split(' ').collect();
+                let mut anon_line = String::from("");
+                for word in words {
+                    // println!("{}", re_iv4.is_match(word));
+                    if re_iv4.is_match(word) {
+                        let ip_parts: Vec<&str> = word.split('.').collect();
+                        anon_line.push_str(ip_parts[0]);
+                        anon_line.push('.');
+                        anon_line.push_str(ip_parts[1]);
+                        anon_line.push_str(".0.0");
+                    } else {
+                        anon_line.push_str(word);
+                    }
+                    anon_line.push(' ');
                 }
+                let _anon_line = anon_line;
+                println!("{}", _anon_line);
+                anon_lines.push(_anon_line);
             }
         }
     }
