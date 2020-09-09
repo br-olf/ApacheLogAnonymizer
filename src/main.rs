@@ -10,11 +10,15 @@ use regex::Regex;
 lazy_static! {
     // This regular expressions match IPv4 addresses. RE_IP4_EXACT considers also line boarders.
     static ref RE_IP4_EXACT: Regex = Regex::new(r"(?x)
-        ^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}
-        (?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$").unwrap();
+        ^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
+        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
+        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
+        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$").unwrap();
     static ref RE_IP4: Regex = Regex::new(r"(?x)
-        (?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}
-        (?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)").unwrap();
+        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
+        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
+        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
+        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)").unwrap();
     // This regular expressions match IPv6 addresses. RE_IP6_EXACT considers also line boarders.
     static ref RE_IP6_EXACT: Regex = Regex::new(r"(?x)
         ^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|
@@ -72,9 +76,19 @@ fn main() {
     //         }
     //     }
     // }
-    let anon_access = anon_audit_log_1("./access.log");
-    for line in anon_access {
-        println!("{}", line)
+
+
+    // let anon_access = anon_audit_log_2("./access.log");
+    // for line in anon_access {
+    //     println!("{}", line)
+    // }
+
+    if let Some(cap) = RE_IP4.find(&"lala127.0.0.2") {
+        println!("{}", cap.as_str());
+    }
+
+    for mat in RE_IP4.find_iter("lala1.1.1.1»foo12.3.2.1gg") {
+        println!("{}", mat.as_str());
     }
 }
 
@@ -114,4 +128,63 @@ fn anon_audit_log_1<P>(filename: P) -> Vec<String>
         }
     }
     anon_lines
+}
+
+fn anon_audit_log_2<P>(filename: P) -> Vec<String>
+    where P: AsRef<Path>, {
+    let mut anon_lines: Vec<String> = Vec::new();
+    // File hosts must exist in current path before this produces output
+    if let Ok(lines) = read_lines(filename) {
+        // Consumes the iterator, returns an (Optional) String
+        for r_line in lines {
+            if let Ok(line) = r_line {
+                let o_mat = RE_IP4.find(&line);
+                match o_mat {
+                    Some(mat) => {
+                        let mut anon_str = String::from("");
+                        anon_str.push_str(&line[..mat.start()]);
+
+                        for cap in RE_IP4.captures_iter(&line) {
+                            // println!("{}", &cap.len());
+                            anon_str.push_str(&cap[1]);
+                            anon_str.push('.');
+                            anon_str.push_str(&cap[2]);
+                            anon_str.push_str(".0.0");
+                            anon_str.push_str(&line[mat.end()..]);
+                        }
+                        anon_str.push_str(&line[..mat.start()]);
+                        anon_lines.push(anon_str);
+                    }
+                    None => {
+                        anon_lines.push(line);
+                    }
+                }
+            }
+        }
+    }
+    anon_lines
+}
+
+fn anon_access_line(line: String) -> String {
+    let o_mat = RE_IP4.find(&line);
+    let mut anon_str = String::from("");
+    match o_mat {
+        Some(mat) => {
+            anon_str.push_str(&line[..mat.start()]);
+
+            for cap in RE_IP4.captures_iter(&line) {
+                // println!("{}", &cap.len());
+                anon_str.push_str(&cap[1]);
+                anon_str.push('.');
+                anon_str.push_str(&cap[2]);
+                anon_str.push_str(".0.0");
+                anon_str.push_str(&line[mat.end()..]);
+            }
+            anon_str.push_str(&line[..mat.start()]);
+        }
+        None => {
+            anon_str.push_str(line.as_str());
+        }
+    }
+    anon_str
 }
