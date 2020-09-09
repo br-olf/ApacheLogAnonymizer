@@ -9,3 +9,10 @@ edition = "2018"
 [dependencies]
 regex = "1"
 lazy_static = "1"
+
+
+[profile.release]
+# opt-level = "s"  # for small binary
+opt-level = 3  # for fast binary
+lto = true
+codegen-units = 1
