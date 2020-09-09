@@ -83,13 +83,18 @@ fn main() {
     //     println!("{}", line)
     // }
 
-    if let Some(cap) = RE_IP4.find(&"lala127.0.0.2") {
-        println!("{}", cap.as_str());
-    }
 
-    for mat in RE_IP4.find_iter("lala1.1.1.1»foo12.3.2.1gg") {
-        println!("{}", mat.as_str());
-    }
+    // // File hosts must exist in current path before this produces output
+    // if let Ok(lines) = read_lines("./access.log") {
+    //     // Consumes the iterator, returns an (Optional) String
+    //     for line in lines {
+    //         if let Ok(content) = line {
+    //             println!("{}", anon_ipv4(content));
+    //         }
+    //     }
+    // }
+
+    println!("{}", anon_ipv4(String::from("1.2.3.4 lalala juhuu[43.22.122.253]")));
 }
 
 // The output is wrapped in a Result to allow matching on errors
@@ -100,91 +105,22 @@ fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
     Ok(io::BufReader::new(file).lines())
 }
 
-fn anon_audit_log_1<P>(filename: P) -> Vec<String>
-    where P: AsRef<Path>, {
-    let mut anon_lines: Vec<String> = Vec::new();
-    // File hosts must exist in current path before this produces output
-    if let Ok(lines) = read_lines(filename) {
-        // Consumes the iterator, returns an (Optional) String
-        for line in lines {
-            if let Ok(content) = line {
-                let words: Vec<&str> = content.split(' ').collect();
-                let mut anon_line = String::from("");
-                for word in words {
-                    if RE_IP4.is_match(word) {
-                        let ip_parts: Vec<&str> = word.split('.').collect();
-                        anon_line.push_str(ip_parts[0]);
-                        anon_line.push('.');
-                        anon_line.push_str(ip_parts[1]);
-                        anon_line.push_str(".0.0");
-                    } else {
-                        anon_line.push_str(word);
-                    }
-                    anon_line.push(' ');
-                }
-                let anon_line_const = anon_line;
-                anon_lines.push(anon_line_const);
-            }
-        }
-    }
-    anon_lines
-}
-
-fn anon_audit_log_2<P>(filename: P) -> Vec<String>
-    where P: AsRef<Path>, {
-    let mut anon_lines: Vec<String> = Vec::new();
-    // File hosts must exist in current path before this produces output
-    if let Ok(lines) = read_lines(filename) {
-        // Consumes the iterator, returns an (Optional) String
-        for r_line in lines {
-            if let Ok(line) = r_line {
-                let o_mat = RE_IP4.find(&line);
-                match o_mat {
-                    Some(mat) => {
-                        let mut anon_str = String::from("");
-                        anon_str.push_str(&line[..mat.start()]);
-
-                        for cap in RE_IP4.captures_iter(&line) {
-                            // println!("{}", &cap.len());
-                            anon_str.push_str(&cap[1]);
-                            anon_str.push('.');
-                            anon_str.push_str(&cap[2]);
-                            anon_str.push_str(".0.0");
-                            anon_str.push_str(&line[mat.end()..]);
-                        }
-                        anon_str.push_str(&line[..mat.start()]);
-                        anon_lines.push(anon_str);
-                    }
-                    None => {
-                        anon_lines.push(line);
-                    }
-                }
-            }
-        }
-    }
-    anon_lines
-}
-
-fn anon_access_line(line: String) -> String {
+fn anon_ipv4(line: String) -> String {
     let o_mat = RE_IP4.find(&line);
     let mut anon_str = String::from("");
-    match o_mat {
-        Some(mat) => {
-            anon_str.push_str(&line[..mat.start()]);
+    let mut last_index: usize = 0;
+    for mat in RE_IP4.find_iter(&line)
+    {
+        anon_str.push_str(&line[last_index..mat.start()]);
+        let octets: Vec<&str> = mat.as_str().split('.').collect();
 
-            for cap in RE_IP4.captures_iter(&line) {
-                // println!("{}", &cap.len());
-                anon_str.push_str(&cap[1]);
-                anon_str.push('.');
-                anon_str.push_str(&cap[2]);
-                anon_str.push_str(".0.0");
-                anon_str.push_str(&line[mat.end()..]);
-            }
-            anon_str.push_str(&line[..mat.start()]);
-        }
-        None => {
-            anon_str.push_str(line.as_str());
-        }
+        anon_str.push_str(&octets[0]);
+        anon_str.push('.');
+        anon_str.push_str(&octets[1]);
+        anon_str.push_str(".0.0");
+
+        last_index = mat.end();
     }
+    anon_str.push_str(&line[last_index..]);
     anon_str
 }
