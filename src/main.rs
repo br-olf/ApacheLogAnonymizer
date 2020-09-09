@@ -1,14 +1,51 @@
+#[macro_use]
+extern crate lazy_static;
+
 use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
 use regex::Regex;
 
+
+
+lazy_static! {
+    // This regular expressions match IPv4 addresses. RE_IP4_EXACT considers also line boarders.
+    static ref RE_IP4_EXACT: Regex = Regex::new(r"(?x)
+        ^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}
+        (?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$").unwrap();
+    static ref RE_IP4: Regex = Regex::new(r"(?x)
+        (?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}
+        (?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)").unwrap();
+    // This regular expressions match IPv6 addresses. RE_IP6_EXACT considers also line boarders.
+    static ref RE_IP6_EXACT: Regex = Regex::new(r"(?x)
+        ^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|
+        ^::(?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}$|
+        ^[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,5}[0-9a-fA-F]{1,4}$|
+        ^[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,4}[0-9a-fA-F]{1,4}$|
+        ^(?:[0-9a-fA-F]{1,4}:){0,2}[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,3}[0-9a-fA-F]{1,4}$|
+        ^(?:[0-9a-fA-F]{1,4}:){0,3}[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,2}[0-9a-fA-F]{1,4}$|
+        ^(?:[0-9a-fA-F]{1,4}:){0,4}[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:)?[0-9a-fA-F]{1,4}$|
+        ^(?:[0-9a-fA-F]{1,4}:){0,5}[0-9a-fA-F]{1,4}::[0-9a-fA-F]{1,4}$|
+        ^(?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}::$").unwrap();
+    static ref RE_IP6: Regex = Regex::new(r"(?x)
+        (?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|
+        ::(?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}|
+        [0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,5}[0-9a-fA-F]{1,4}|
+        [0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,4}[0-9a-fA-F]{1,4}|
+        (?:[0-9a-fA-F]{1,4}:){0,2}[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,3}[0-9a-fA-F]{1,4}|
+        (?:[0-9a-fA-F]{1,4}:){0,3}[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,2}[0-9a-fA-F]{1,4}|
+        (?:[0-9a-fA-F]{1,4}:){0,4}[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:)?[0-9a-fA-F]{1,4}|
+        (?:[0-9a-fA-F]{1,4}:){0,5}[0-9a-fA-F]{1,4}::[0-9a-fA-F]{1,4}|
+        (?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}::").unwrap();
+}
+
+
 fn main() {
     println!("Hello, world!");
-    let re_iv4 = Regex::new(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$").unwrap();
+
     //assert!(re.is_match("2014-01-01"));
-    println!("{}", re_iv4.is_match("127.0.0.1"));
+    println!("{}", RE_IP4.is_match("127.0.0.1"));
 
     let mut anon_lines: Vec<String> = Vec::new();
     // File hosts must exist in current path before this produces output
@@ -20,7 +57,7 @@ fn main() {
                 let mut anon_line = String::from("");
                 for word in words {
                     // println!("{}", re_iv4.is_match(word));
-                    if re_iv4.is_match(word) {
+                    if RE_IP4.is_match(word) {
                         let ip_parts: Vec<&str> = word.split('.').collect();
                         anon_line.push_str(ip_parts[0]);
                         anon_line.push('.');
@@ -31,9 +68,9 @@ fn main() {
                     }
                     anon_line.push(' ');
                 }
-                let _anon_line = anon_line;
-                println!("{}", _anon_line);
-                anon_lines.push(_anon_line);
+                let anon_line_const = anon_line;
+                println!("{}", anon_line_const);
+                anon_lines.push(anon_line_const);
             }
         }
     }
