@@ -7,8 +7,6 @@ use std::path::Path;
 
 use regex::Regex;
 
-
-
 lazy_static! {
     // This regular expressions match IPv4 addresses. RE_IP4_EXACT considers also line boarders.
     static ref RE_IP4_EXACT: Regex = Regex::new(r"(?x)
@@ -45,18 +43,60 @@ fn main() {
     println!("Hello, world!");
 
     //assert!(re.is_match("2014-01-01"));
-    println!("{}", RE_IP4.is_match("127.0.0.1"));
+    //println!("{}", RE_IP4.is_match("127.0.0.1"));
 
+    // let mut anon_lines: Vec<String> = Vec::new();
+    // // File hosts must exist in current path before this produces output
+    // if let Ok(lines) = read_lines("./access.log") {
+    //     // Consumes the iterator, returns an (Optional) String
+    //     for line in lines {
+    //         if let Ok(content) = line {
+    //             let words: Vec<&str> = content.split(' ').collect();
+    //             let mut anon_line = String::from("");
+    //             for word in words {
+    //                 // println!("{}", re_iv4.is_match(word));
+    //                 if RE_IP4.is_match(word) {
+    //                     let ip_parts: Vec<&str> = word.split('.').collect();
+    //                     anon_line.push_str(ip_parts[0]);
+    //                     anon_line.push('.');
+    //                     anon_line.push_str(ip_parts[1]);
+    //                     anon_line.push_str(".0.0");
+    //                 } else {
+    //                     anon_line.push_str(word);
+    //                 }
+    //                 anon_line.push(' ');
+    //             }
+    //             let anon_line_const = anon_line;
+    //             println!("{}", anon_line_const);
+    //             anon_lines.push(anon_line_const);
+    //         }
+    //     }
+    // }
+    let anon_access = anon_audit_log_1("./access.log");
+    for line in anon_access {
+        println!("{}", line)
+    }
+}
+
+// The output is wrapped in a Result to allow matching on errors
+// Returns an Iterator to the Reader of the lines of the file.
+fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
+    where P: AsRef<Path>, {
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
+}
+
+fn anon_audit_log_1<P>(filename: P) -> Vec<String>
+    where P: AsRef<Path>, {
     let mut anon_lines: Vec<String> = Vec::new();
     // File hosts must exist in current path before this produces output
-    if let Ok(lines) = read_lines("./access.log") {
+    if let Ok(lines) = read_lines(filename) {
         // Consumes the iterator, returns an (Optional) String
         for line in lines {
             if let Ok(content) = line {
                 let words: Vec<&str> = content.split(' ').collect();
                 let mut anon_line = String::from("");
                 for word in words {
-                    // println!("{}", re_iv4.is_match(word));
                     if RE_IP4.is_match(word) {
                         let ip_parts: Vec<&str> = word.split('.').collect();
                         anon_line.push_str(ip_parts[0]);
@@ -69,17 +109,9 @@ fn main() {
                     anon_line.push(' ');
                 }
                 let anon_line_const = anon_line;
-                println!("{}", anon_line_const);
                 anon_lines.push(anon_line_const);
             }
         }
     }
-}
-
-// The output is wrapped in a Result to allow matching on errors
-// Returns an Iterator to the Reader of the lines of the file.
-fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-    where P: AsRef<Path>, {
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
+    anon_lines
 }
