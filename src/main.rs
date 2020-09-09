@@ -9,28 +9,37 @@ use std::path::Path;
 use regex::Regex;
 
 lazy_static! {
-    // This regular expressions match IPv4 addresses. RE_IP4_EXACT considers also line boarders.
-    static ref RE_IP4_EXACT: Regex = Regex::new(r"(?x)
-        ^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
-        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
-        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
-        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$").unwrap();
+    // This regular expression matches IPv4 addresses.
     static ref RE_IP4: Regex = Regex::new(r"(?x)
-        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
-        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
-        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
-        (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)").unwrap();
-    // This regular expressions match IPv6 addresses. RE_IP6_EXACT considers also line boarders.
-    static ref RE_IP6_EXACT: Regex = Regex::new(r"(?x)
-        ^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|
-        ^::(?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}$|
-        ^[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,5}[0-9a-fA-F]{1,4}$|
-        ^[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,4}[0-9a-fA-F]{1,4}$|
-        ^(?:[0-9a-fA-F]{1,4}:){0,2}[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,3}[0-9a-fA-F]{1,4}$|
-        ^(?:[0-9a-fA-F]{1,4}:){0,3}[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,2}[0-9a-fA-F]{1,4}$|
-        ^(?:[0-9a-fA-F]{1,4}:){0,4}[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:)?[0-9a-fA-F]{1,4}$|
-        ^(?:[0-9a-fA-F]{1,4}:){0,5}[0-9a-fA-F]{1,4}::[0-9a-fA-F]{1,4}$|
-        ^(?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}::$").unwrap();
+        (?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}
+        (?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)").unwrap();
+
+    // // This regular expressions match IPv4 addresses with capture groups.
+    // // RE_IP4_EXACT considers also line boarders.
+    // static ref RE_IP4_EXACT_CG: Regex = Regex::new(r"(?x)
+    //     ^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
+    //     (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
+    //     (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
+    //     (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$").unwrap();
+    // static ref RE_IP4_CG: Regex = Regex::new(r"(?x)
+    //     (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
+    //     (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
+    //     (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.)
+    //     (25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)").unwrap();
+    //
+    // // This regular expression matches IPv6 addresses and considers also line boarders.
+    // static ref RE_IP6_EXACT: Regex = Regex::new(r"(?x)
+    //     ^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|
+    //     ^::(?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}$|
+    //     ^[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,5}[0-9a-fA-F]{1,4}$|
+    //     ^[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,4}[0-9a-fA-F]{1,4}$|
+    //     ^(?:[0-9a-fA-F]{1,4}:){0,2}[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,3}[0-9a-fA-F]{1,4}$|
+    //     ^(?:[0-9a-fA-F]{1,4}:){0,3}[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:){0,2}[0-9a-fA-F]{1,4}$|
+    //     ^(?:[0-9a-fA-F]{1,4}:){0,4}[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:)?[0-9a-fA-F]{1,4}$|
+    //     ^(?:[0-9a-fA-F]{1,4}:){0,5}[0-9a-fA-F]{1,4}::[0-9a-fA-F]{1,4}$|
+    //     ^(?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}::$").unwrap();
+
+    // This regular expression matches IPv6 addresses.
     static ref RE_IP6: Regex = Regex::new(r"(?x)
         (?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|
         ::(?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}|
