@@ -1,11 +1,11 @@
 #[macro_use]
 extern crate lazy_static;
 
-use std::fs::File;
-use std::io::{self, BufRead};
+use std::fs;
+use std::io::{self, Error as ioError, Read};
 use std::net::Ipv6Addr;
-use std::path::Path;
 
+use clap::{App, Arg};
 use regex::Regex;
 
 lazy_static! {
@@ -53,86 +53,46 @@ lazy_static! {
 }
 
 
-fn main() {
-    println!("Hello, world!");
+fn main() -> Result<(), ioError> {
+    let cli = App::new("ApacheLogAnonymizer")
+        .version("0.1")
+        .author("Olaf Pichler <olaf.pichler@urz.uni-heidelberg.de>")
+        .about("Anonymizes IPv4 and IPv6 addresses in text. \nBy default reads from STDIN and writes to STDOUT. ")
+        .arg(
+            Arg::with_name("in-file")
+                .help("file to read from instead of STDIN")
+                .takes_value(true)
+                .short("i")
+                .long("in-file")
+        )
+        .arg(
+            Arg::with_name("out-file")
+                .help("file to redirect output to")
+                .takes_value(true)
+                .short("o")
+                .long("out-file")
+        )
+        .get_matches();
 
-    //assert!(re.is_match("2014-01-01"));
-    //println!("{}", RE_IP4.is_match("127.0.0.1"));
+    let mut input = String::new();
 
-    // let mut anon_lines: Vec<String> = Vec::new();
-    // // File hosts must exist in current path before this produces output
-    // if let Ok(lines) = read_lines("./access.log") {
-    //     // Consumes the iterator, returns an (Optional) String
-    //     for line in lines {
-    //         if let Ok(content) = line {
-    //             let words: Vec<&str> = content.split(' ').collect();
-    //             let mut anon_line = String::from("");
-    //             for word in words {
-    //                 // println!("{}", re_iv4.is_match(word));
-    //                 if RE_IP4.is_match(word) {
-    //                     let ip_parts: Vec<&str> = word.split('.').collect();
-    //                     anon_line.push_str(ip_parts[0]);
-    //                     anon_line.push('.');
-    //                     anon_line.push_str(ip_parts[1]);
-    //                     anon_line.push_str(".0.0");
-    //                 } else {
-    //                     anon_line.push_str(word);
-    //                 }
-    //                 anon_line.push(' ');
-    //             }
-    //             let anon_line_const = anon_line;
-    //             println!("{}", anon_line_const);
-    //             anon_lines.push(anon_line_const);
-    //         }
-    //     }
-    // }
+    match cli.value_of("in-file") {
+        Some(filename) => // option "in-file" is set; try to open file to read
+            input = fs::read_to_string(filename)?,
+        None =>  // option "in-file" is not set; read from STDIN
+            if let Err(e) = io::stdin().read_to_string(&mut input) { return Err(e); },
+    }
 
+    let output = anon_ipv6(anon_ipv4(input));
 
-    // let anon_access = anon_audit_log_2("./access.log");
-    // for line in anon_access {
-    //     println!("{}", line)
-    // }
+    match cli.value_of("out-file") {
+        Some(filename) => // option "out-file" is set; try to open file to write
+            return fs::write(filename, output),
+        None =>  // option "out-file" is not set; write to STDOUT
+            println!("{}", output),
+    }
 
-
-    // // File hosts must exist in current path before this produces output
-    // if let Ok(lines) = read_lines("./access.log") {
-    //     // Consumes the iterator, returns an (Optional) String
-    //     for line in lines {
-    //         if let Ok(content) = line {
-    //             println!("{}", anon_ipv4(content));
-    //         }
-    //     }
-    // }
-
-    println!("{}", anon_ipv4(String::from("1.2.3.4 lalala juhuu[43.22.122.253]")));
-
-    // let mut str_seg = String::from("\n");
-    // let mut str_oct = String::from("\n");
-    // if let Ok(ip6) = &"acdc:1234::fff:1".parse::<Ipv6Addr>() {
-    //     let segs = ip6.segments();
-    //     for seg in &segs {
-    //         str_seg.push_str(&seg.to_string());
-    //         str_seg.push(' ');
-    //     }
-    //     let octs = ip6.octets();
-    //     for oct in &octs {
-    //         str_oct.push_str(&oct.to_string());
-    //         str_oct.push(' ');
-    //     }
-    //     let anon_v6 = Ipv6Addr::new(segs[0], segs[1], segs[2], segs[3], 0, 0, 0, 0);
-    //     println!("{}", anon_v6.to_string());
-    // }
-    // // println!("{}", str_seg);
-
-    println!("{}", anon_ipv6(String::from("acdc:1234::fff:1 foobar ::1 lala 1:2:3:4:5:6:7:8")));
-}
-
-// The output is wrapped in a Result to allow matching on errors
-// Returns an Iterator to the Reader of the lines of the file.
-fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-    where P: AsRef<Path>, {
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
+    Ok(())
 }
 
 fn anon_ipv4(line: String) -> String {
