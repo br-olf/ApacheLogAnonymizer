@@ -50,6 +50,9 @@ lazy_static! {
         (?:[0-9a-fA-F]{1,4}:){0,4}[0-9a-fA-F]{1,4}::(?:[0-9a-fA-F]{1,4}:)?[0-9a-fA-F]{1,4}|
         (?:[0-9a-fA-F]{1,4}:){0,5}[0-9a-fA-F]{1,4}::[0-9a-fA-F]{1,4}|
         (?:[0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}::").unwrap();
+
+    // This expression searches for GET parameter in URLs or similar strings
+    static ref RE_GETARGS: Regex = Regex::new("(/.+?)(?:\\?[^ '\"]+)+").unwrap();
 }
 
 
@@ -83,7 +86,7 @@ fn main() -> Result<(), ioError> {
             if let Err(e) = io::stdin().read_to_string(&mut input) { return Err(e); },
     }
 
-    let output = anon_ipv6(anon_ipv4(input));
+    let output = anon_get(anon_ipv6(anon_ipv4(input)));
 
     match cli.value_of("out-file") {
         Some(filename) => // option "out-file" is set; try to open file to write
@@ -131,6 +134,21 @@ fn anon_ipv6(line: String) -> String {
             let anon_ip6 = Ipv6Addr::from(segs);
             anon_str.push_str(&anon_ip6.to_string());
         }
+        last_index = mat.end();
+    }
+    anon_str.push_str(&line[last_index..]);
+    anon_str
+}
+
+fn anon_get(line: String) -> String {
+    let mut anon_str = String::from("");
+    let mut last_index: usize = 0;
+    for mat in RE_GETARGS.find_iter(&line)
+    {
+        anon_str.push_str(&line[last_index..mat.start()]);
+
+        anon_str.push_str(&RE_GETARGS.replace(mat.as_str(), "${1}?XXXXX"));
+
         last_index = mat.end();
     }
     anon_str.push_str(&line[last_index..]);
