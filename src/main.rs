@@ -60,7 +60,7 @@ fn main() -> Result<(), ioError> {
     let cli = App::new("ApacheLogAnonymizer")
         .version("0.1")
         .author("Olaf Pichler <olaf.pichler@urz.uni-heidelberg.de>")
-        .about("Anonymizes IPv4 and IPv6 addresses in text. \nBy default reads from STDIN and writes to STDOUT. ")
+        .about("Anonymizes web server logs for long term storage in compliance with the GDPR. \nBy default reads from STDIN and writes to STDOUT. ")
         .arg(
             Arg::with_name("in-file")
                 .help("file to read from instead of STDIN")
