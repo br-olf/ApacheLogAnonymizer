@@ -1,8 +1,15 @@
 [package]
 name = "ApacheLogAnonymizer"
 version = "0.1.0"
-authors = ["Brolf <brolf@magheute.net>"]
+authors = ["Olaf Pichler <olaf.pichler@urz.uni-heidelberg.de>"]
 edition = "2018"
+license = "EUPL-1.2"
+description = "Anonymizes web server logs for long term storage in compliance with the GDPR."
+homepage = "https://github.com/br-olf/ApacheLogAnonymizer"
+repository = "https://gitlab.urz.uni-heidelberg.de/PichlerOlaf/ApacheLogAnonymizer"
+readme = "README.md"
+keywords = ["gdpr", "webserver", "log", "anonymization"]
+categories = ["command-line-utilities", "text-processing", "encoding"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
