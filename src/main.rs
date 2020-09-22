@@ -17,7 +17,7 @@
 extern crate lazy_static;
 
 use std::fs;
-use std::io::{self, Error as ioError, Read};
+use std::io::{self, Error as ioError, BufRead, BufReader};
 use std::net::Ipv6Addr;
 
 use clap::{App, Arg};
@@ -67,17 +67,21 @@ fn main() -> Result<(), ioError> {
         )
         .get_matches();
 
-    let mut input = String::new();
 
-    match cli.value_of("in-file") {
+    let reader: Box<dyn BufRead> = match cli.value_of("in-file") {
         Some(filename) => // option "in-file" is set; try to open file to read
-            input = fs::read_to_string(filename)?,
+            Box::new(BufReader::new(fs::File::open(filename).unwrap())),
         None =>  // option "in-file" is not set; read from STDIN
-            if let Err(e) = io::stdin().read_to_string(&mut input) { return Err(e); },
-    }
+            Box::new(BufReader::new(io::stdin()))
+    };
 
     // anonymize input
-    let output = anon_get(anon_ipv6(anon_ipv4(input)));
+    let mut output = String::from("");
+    for line in reader.lines(){
+        output.push_str(&anon_get(anon_ipv6(anon_ipv4(line.unwrap()))));
+        output.push('\n');
+    }
+
 
     match cli.value_of("out-file") {
         Some(filename) => // option "out-file" is set; try to open file to write
