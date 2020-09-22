@@ -1,6 +1,6 @@
 [package]
 name = "ApacheLogAnonymizer"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Olaf Pichler <olaf.pichler@urz.uni-heidelberg.de>"]
 edition = "2018"
 license = "EUPL-1.2"
